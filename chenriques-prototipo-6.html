@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="pt-AO">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CHENRIQUES — Protótipo</title>
+<style>
+  :root{
+    --ink:#10203D;
+    --ink-soft:#4C5A75;
+    --bg:#F5F7FB;
+    --surface:#FFFFFF;
+    --line:#DCE3EE;
+    --blue:#0B3D91;
+    --blue-soft:#E7EDF9;
+    --orange:#E8912D;
+    --orange-soft:#FDF0DF;
+    --green:#2E8B57;
+    --green-soft:#E5F3EA;
+    --radius:14px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  header{
+    background:var(--blue);
+    color:#fff;
+    padding:14px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .brand{display:flex; flex-direction:column; line-height:1.15;}
+  .brand b{font-size:1.15rem; letter-spacing:0.01em;}
+  .brand span{font-size:0.72rem; color:#C9D7F2;}
+  .status-pill{
+    display:flex; align-items:center; gap:7px;
+    background:rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.25);
+    border-radius:999px;
+    padding:6px 12px;
+    font-size:0.82rem;
+    font-weight:600;
+  }
+  .dot{width:9px; height:9px; border-radius:50%; background:#8FA3C9;}
+  .dot.on{background:var(--orange); animation:pulse 1.4s ease-in-out infinite;}
+  .dot.speaking{background:#5FD37C; animation:pulse 1.4s ease-in-out infinite;}
+  .dot.loading{background:#F2C879; animation:pulse 0.9s ease-in-out infinite;}
+  .dot.signs{background:#7AC0F0; animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(232,145,45,0.55);}
+    50%{box-shadow:0 0 0 7px rgba(232,145,45,0);}
+  }
+
+  main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    padding:18px;
+    gap:14px;
+    max-width:760px;
+    width:100%;
+    margin:0 auto;
+  }
+  .panel-label{
+    font-size:0.78rem; font-weight:700; color:var(--ink-soft); margin:0 0 8px 2px;
+  }
+  .caption-box{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:26px 22px;
+    flex:1;
+    min-height:30vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    position:relative;
+  }
+  .caption-text{
+    font-size:clamp(1.4rem, 5vw, 2.3rem);
+    font-weight:600;
+    line-height:1.3;
+    color:var(--ink);
+    word-break:break-word;
+  }
+  .caption-text.placeholder{color:#9AA6BD; font-weight:500; font-size:1.1rem;}
+  .caption-text .pending{color:var(--ink-soft); font-weight:500; font-style:italic;}
+
+  .avatar-note{
+    position:absolute; top:12px; right:14px;
+    font-size:0.68rem; color:#B7C0D2;
+    border:1px dashed #C9D1E2; border-radius:999px; padding:3px 9px;
+  }
+
+  .engine-note{
+    font-size:0.78rem;
+    color:var(--ink-soft);
+    background:var(--blue-soft);
+    border:1px solid #CBD9F3;
+    border-radius:10px;
+    padding:10px 12px;
+    line-height:1.45;
+  }
+  .engine-note b{color:var(--blue);}
+
+  .progress-wrap{
+    display:none;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 12px;
+    font-size:0.82rem;
+    color:var(--ink-soft);
+  }
+  .progress-wrap.show{display:block;}
+  .progress-bar-track{
+    height:6px; background:var(--bg); border-radius:99px; overflow:hidden; margin-top:6px;
+  }
+  .progress-bar-fill{
+    height:100%; width:0%; background:var(--orange); transition:width 0.2s ease;
+  }
+
+  /* ---------- modo / câmara ---------- */
+  .mode-row{
+    display:flex;
+    gap:12px;
+    align-items:stretch;
+    flex-wrap:wrap;
+  }
+  .mode-badge{
+    flex:1;
+    min-width:180px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:4px;
+  }
+  .mode-badge .mode-label{font-size:0.74rem; font-weight:700; color:var(--ink-soft);}
+  .mode-badge .mode-value{font-size:1.15rem; font-weight:700; color:var(--ink);}
+  .mode-badge.voice .mode-value{color:var(--orange);}
+  .mode-badge.signs .mode-value{color:var(--blue);}
+  .mode-badge.idle .mode-value{color:#9AA6BD;}
+
+  .camera-box{
+    width:150px;
+    height:150px;
+    flex-shrink:0;
+    background:#0B1830;
+    border-radius:var(--radius);
+    overflow:hidden;
+    position:relative;
+    border:1px solid var(--line);
+  }
+  .camera-box video, .camera-box canvas{
+    position:absolute;
+    top:0; left:0;
+    width:100%; height:100%;
+    object-fit:cover;
+    transform:scaleX(-1); /* espelhado, natural para quem se filma */
+  }
+  .camera-box .cam-label{
+    position:absolute; bottom:4px; left:6px;
+    font-size:0.62rem; color:#fff; background:rgba(0,0,0,0.45);
+    padding:1px 6px; border-radius:6px; z-index:2;
+  }
+  .camera-off-msg{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:#7C8CAE; font-size:0.68rem; text-align:center; padding:8px;
+  }
+
+  .reply-row{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px;
+  }
+  .reply-row label{
+    display:block; font-size:0.78rem; font-weight:700; color:var(--ink-soft); margin-bottom:8px;
+  }
+  .reply-input-wrap{display:flex; gap:8px;}
+  #replyInput{
+    flex:1; font-size:1rem; padding:12px 14px; border-radius:10px;
+    border:1px solid var(--line); background:var(--bg); color:var(--ink); font-family:inherit;
+  }
+  #replyInput:focus{outline:2px solid var(--orange); outline-offset:1px;}
+  button{font-family:inherit; cursor:pointer; border:none;}
+  .speak-btn{
+    background:var(--orange); color:#fff; font-weight:700; font-size:0.95rem;
+    padding:0 20px; border-radius:10px; white-space:nowrap;
+  }
+  .speak-btn:active{transform:scale(0.97);}
+  .speak-btn:disabled{background:#E7CBA1; cursor:not-allowed;}
+
+  .controls{display:flex; gap:10px; flex-wrap:wrap;}
+  .ctrl-btn{
+    flex:1; min-width:140px; background:var(--surface); border:1px solid var(--line);
+    color:var(--ink); font-weight:700; font-size:0.9rem; padding:12px; border-radius:10px;
+  }
+  .ctrl-btn.primary{background:var(--blue); color:#fff; border-color:var(--blue);}
+  .ctrl-btn.on{background:var(--orange-soft); border-color:var(--orange); color:#8A5417;}
+  .ctrl-btn:disabled{opacity:0.55; cursor:not-allowed;}
+
+  .unsupported{
+    background:#FBEAE7; border:1px solid #EFC2BB; color:#8A2E22;
+    border-radius:var(--radius); padding:14px 16px; font-size:0.9rem; line-height:1.5;
+    display:none;
+  }
+
+  footer{text-align:center; font-size:0.72rem; color:#9AA6BD; padding:10px 18px 20px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <b>CHENRIQUES</b>
+    <span>Protótipo · Passo 3 — deteção automática de voz/mãos</span>
+  </div>
+  <div class="status-pill" id="statusPill">
+    <span class="dot" id="statusDot"></span>
+    <span id="statusText">Parado</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="unsupported" id="unsupportedBox">
+    Não foi possível preparar o reconhecimento de voz ou a câmara neste navegador/dispositivo.
+    Tente noutro navegador (Chrome recomendado) ou verifique as permissões e a ligação à internet.
+  </div>
+
+  <p class="engine-note">
+    Este passo ainda não traduz sinais em texto — isso é o Passo 5/6 do roteiro. Aqui, a
+    aplicação só decide sozinha <b>quem está a comunicar</b>: se detetar mãos diante da
+    câmara, assume "modo sinais"; se detetar voz, assume "modo voz" e transcreve com Whisper.
+    Sem botão para alternar. O microfone já usa supressão de ruído nativa do navegador,
+    para ajudar em ambientes barulhentos (rua, hospital, workshop).
+  </p>
+
+  <div class="progress-wrap" id="progressWrap">
+    <span id="progressLabel">A carregar o modelo Whisper (só na primeira vez)…</span>
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="progressFill"></div></div>
+  </div>
+
+  <div class="mode-row">
+    <div class="mode-badge idle" id="modeBadge">
+      <span class="mode-label">Modo atual</span>
+      <span class="mode-value" id="modeValue">Parado</span>
+    </div>
+    <div class="camera-box">
+      <video id="camVideo" autoplay playsinline muted></video>
+      <canvas id="camCanvas"></canvas>
+      <span class="cam-label">câmara</span>
+      <div class="camera-off-msg" id="cameraOffMsg">câmara desligada</div>
+    </div>
+  </div>
+
+  <section>
+    <p class="panel-label">Legenda ao vivo</p>
+    <div class="caption-box">
+      <span class="avatar-note">lugar do avatar LGA — fase seguinte</span>
+      <p class="caption-text placeholder" id="captionText">
+        Toque em “Iniciar conversa” para ligar microfone e câmara.
+      </p>
+    </div>
+  </section>
+
+  <section class="reply-row">
+    <label for="replyInput">Resposta escrita (lugar do reconhecimento de sinais, fase seguinte)</label>
+    <div class="reply-input-wrap">
+      <input type="text" id="replyInput" placeholder="Escreva aqui o que quer dizer..." autocomplete="off">
+      <button class="speak-btn" id="speakBtn">Falar</button>
+    </div>
+  </section>
+
+  <section class="controls">
+    <button class="ctrl-btn primary" id="startToggle" disabled>A preparar o motor…</button>
+    <button class="ctrl-btn" id="clearBtn">Limpar legenda</button>
+  </section>
+
+</main>
+
+<footer>
+  Cecílio Manuel Henriques · Projeto CHENRIQUES · protótipo de demonstração (Passo 3)
+</footer>
+
+<!-- MediaPipe Hands: bibliotecas clássicas (não-módulo), carregadas via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+<script type="module">
+  import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+
+  env.allowLocalModels = false;
+
+  const captionText    = document.getElementById('captionText');
+  const statusDot       = document.getElementById('statusDot');
+  const statusText      = document.getElementById('statusText');
+  const startToggle     = document.getElementById('startToggle');
+  const clearBtn        = document.getElementById('clearBtn');
+  const replyInput      = document.getElementById('replyInput');
+  const speakBtn        = document.getElementById('speakBtn');
+  const unsupportedBox  = document.getElementById('unsupportedBox');
+  const progressWrap    = document.getElementById('progressWrap');
+  const progressLabel   = document.getElementById('progressLabel');
+  const progressFill    = document.getElementById('progressFill');
+  const modeBadge       = document.getElementById('modeBadge');
+  const modeValue       = document.getElementById('modeValue');
+  const camVideo        = document.getElementById('camVideo');
+  const camCanvas       = document.getElementById('camCanvas');
+  const cameraOffMsg    = document.getElementById('cameraOffMsg');
+  const camCtx          = camCanvas.getContext('2d');
+
+  const CHUNK_SECONDS   = 4;
+  const TARGET_RATE     = 16000;
+  const VOICE_RMS_THRESHOLD = 0.02;   // limiar simples de energia para detetar voz
+  const HANGOVER_MS     = 700;        // mantém o modo ativo por mais um pouco, evita oscilar
+
+  let transcriber = null;
+  let audioCtx = null, micStream = null, sourceNode = null, processorNode = null;
+  let sampleBuffer = [];
+  let nativeRate = 48000;
+  let running = false;
+  let busyTranscribing = false;
+  let finalTranscript = '';
+
+  let voiceActiveUntil = 0;
+  let handsActiveUntil = 0;
+  let currentMode = 'idle'; // idle | voice | signs
+  let hands = null, camera = null;
+
+  function now(){ return performance.now(); }
+
+  function setStatus(kind){
+    statusDot.className = 'dot';
+    if(kind === 'loading'){ statusDot.classList.add('loading'); statusText.textContent = 'A carregar'; }
+    else if(kind === 'transcribing'){ statusDot.classList.add('on'); statusText.textContent = 'A transcrever'; }
+    else if(kind === 'speaking'){ statusDot.classList.add('speaking'); statusText.textContent = 'A falar'; }
+    else if(kind === 'voice'){ statusDot.classList.add('on'); statusText.textContent = 'A ouvir'; }
+    else if(kind === 'signs'){ statusDot.classList.add('signs'); statusText.textContent = 'A ver sinais'; }
+    else { statusText.textContent = 'Parado'; }
+  }
+
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function renderCaption(pendingLabel){
+    const combined = finalTranscript.trim();
+    if(!combined && !pendingLabel){
+      captionText.textContent = running
+        ? 'A aguardar voz ou sinais…'
+        : 'Toque em “Iniciar conversa” para ligar microfone e câmara.';
+      captionText.classList.add('placeholder');
+      return;
+    }
+    captionText.classList.remove('placeholder');
+    captionText.innerHTML = escapeHtml(combined) +
+      (pendingLabel ? ' <span class="pending">' + escapeHtml(pendingLabel) + '</span>' : '');
+  }
+
+  function updateModeBadge(mode){
+    modeBadge.className = 'mode-badge ' + (mode === 'voice' ? 'voice' : mode === 'signs' ? 'signs' : 'idle');
+    modeValue.textContent = mode === 'voice' ? '🎤 Voz' : mode === 'signs' ? '✋ Sinais' : running ? 'A aguardar' : 'Parado';
+  }
+
+  // --- carregar o modelo Whisper --------------------------------------
+  async function loadModel(){
+    progressWrap.classList.add('show');
+    setStatus('loading');
+    try{
+      transcriber = await pipeline(
+        'automatic-speech-recognition',
+        'Xenova/whisper-tiny',
+        {
+          progress_callback: (data) => {
+            if(data && data.status === 'progress' && typeof data.progress === 'number'){
+              progressFill.style.width = Math.round(data.progress) + '%';
+              progressLabel.textContent = 'A carregar o modelo Whisper… ' + Math.round(data.progress) + '%';
+            }
+          }
+        }
+      );
+      progressWrap.classList.remove('show');
+      startToggle.disabled = false;
+      startToggle.textContent = 'Iniciar conversa';
+      setStatus('idle');
+    } catch(err){
+      console.error(err);
+      unsupportedBox.style.display = 'block';
+      progressWrap.classList.remove('show');
+    }
+  }
+
+  // --- áudio: deteção de energia + acumulação para o Whisper ----------
+  function downsampleTo16k(float32Arr, inputRate){
+    if(inputRate === TARGET_RATE) return float32Arr;
+    const ratio = inputRate / TARGET_RATE;
+    const newLength = Math.round(float32Arr.length / ratio);
+    const result = new Float32Array(newLength);
+    for(let i = 0; i < newLength; i++){
+      result[i] = float32Arr[Math.floor(i * ratio)];
+    }
+    return result;
+  }
+
+  function rms(buf){
+    let sum = 0;
+    for(let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+    return Math.sqrt(sum / buf.length);
+  }
+
+  async function transcribeChunk(float32Chunk){
+    if(!transcriber || busyTranscribing) return;
+    busyTranscribing = true;
+    setStatus('transcribing');
+    try{
+      const result = await transcriber(float32Chunk, { language: 'portuguese', task: 'transcribe' });
+      const text = (result && result.text ? result.text : '').trim();
+      if(text){
+        finalTranscript += (finalTranscript ? ' ' : '') + text;
+        renderCaption('');
+      }
+    } catch(err){
+      console.error('Erro na transcrição:', err);
+    } finally {
+      busyTranscribing = false;
+      setStatus(currentMode === 'voice' ? 'voice' : currentMode === 'signs' ? 'signs' : 'idle');
+    }
+  }
+
+  async function startAudio(){
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,   // remove o eco do próprio som ambiente
+        noiseSuppression: true,   // suprime ruído de fundo (rua, hospital, workshop)
+        autoGainControl: true,    // equilibra o volume automaticamente
+      }
+    });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    nativeRate = audioCtx.sampleRate;
+    sourceNode = audioCtx.createMediaStreamSource(micStream);
+    const bufferSize = 4096;
+    processorNode = audioCtx.createScriptProcessor(bufferSize, 1, 1);
+    sampleBuffer = [];
+
+    processorNode.onaudioprocess = (e) => {
+      const input = e.inputBuffer.getChannelData(0);
+      const energy = rms(input);
+      if(energy > VOICE_RMS_THRESHOLD){
+        voiceActiveUntil = now() + HANGOVER_MS;
+      }
+
+      // só acumula para o Whisper enquanto estivermos em modo de voz
+      if(currentMode === 'voice'){
+        sampleBuffer.push(new Float32Array(input));
+        const totalSamples = sampleBuffer.reduce((a, b) => a + b.length, 0);
+        if(totalSamples >= nativeRate * CHUNK_SECONDS){
+          const merged = new Float32Array(totalSamples);
+          let offset = 0;
+          for(const b of sampleBuffer){ merged.set(b, offset); offset += b.length; }
+          sampleBuffer = [];
+          const chunk16k = downsampleTo16k(merged, nativeRate);
+          renderCaption('(a transcrever bloco…)');
+          transcribeChunk(chunk16k);
+        }
+      } else {
+        sampleBuffer = []; // descarta áudio acumulado fora do modo de voz
+      }
+    };
+
+    sourceNode.connect(processorNode);
+    processorNode.connect(audioCtx.destination);
+  }
+
+  function stopAudio(){
+    if(processorNode){ processorNode.disconnect(); processorNode.onaudioprocess = null; }
+    if(sourceNode){ sourceNode.disconnect(); }
+    if(audioCtx){ audioCtx.close(); }
+    if(micStream){ micStream.getTracks().forEach(t => t.stop()); }
+    sampleBuffer = [];
+  }
+
+  // --- câmara + MediaPipe Hands (deteção de presença de mãos) ---------
+  function onHandsResults(results){
+    camCanvas.width = camVideo.videoWidth || 300;
+    camCanvas.height = camVideo.videoHeight || 300;
+    camCtx.save();
+    camCtx.clearRect(0, 0, camCanvas.width, camCanvas.height);
+
+    const found = results.multiHandLandmarks && results.multiHandLandmarks.length > 0;
+    if(found){
+      handsActiveUntil = now() + HANGOVER_MS;
+      for(const landmarks of results.multiHandLandmarks){
+        if(window.drawConnectors && window.HAND_CONNECTIONS){
+          window.drawConnectors(camCtx, landmarks, window.HAND_CONNECTIONS, { color: '#E8912D', lineWidth: 2 });
+        }
+        if(window.drawLandmarks){
+          window.drawLandmarks(camCtx, landmarks, { color: '#0B3D91', lineWidth: 1, radius: 2 });
+        }
+      }
+    }
+    camCtx.restore();
+  }
+
+  async function startCamera(){
+    const camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 320, height: 240 } });
+    camVideo.srcObject = camStream;
+    cameraOffMsg.style.display = 'none';
+
+    hands = new window.Hands({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+    hands.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 0,
+      minDetectionConfidence: 0.6,
+      minTrackingConfidence: 0.5,
+    });
+    hands.onResults(onHandsResults);
+
+    camera = new window.Camera(camVideo, {
+      onFrame: async () => { await hands.send({ image: camVideo }); },
+      width: 320,
+      height: 240,
+    });
+    camera.start();
+  }
+
+  function stopCamera(){
+    if(camera){ camera.stop(); camera = null; }
+    if(camVideo.srcObject){ camVideo.srcObject.getTracks().forEach(t => t.stop()); camVideo.srcObject = null; }
+    camCtx.clearRect(0, 0, camCanvas.width, camCanvas.height);
+    cameraOffMsg.style.display = 'flex';
+    hands = null;
+  }
+
+  // --- árbitro de modo (a cada 300ms decide quem está a "falar") -------
+  let arbiterTimer = null;
+  function arbiterTick(){
+    const t = now();
+    const voiceOn = t < voiceActiveUntil;
+    const handsOn = t < handsActiveUntil;
+
+    let next = 'idle';
+    if(handsOn && !voiceOn) next = 'signs';
+    else if(voiceOn && !handsOn) next = 'voice';
+    else if(handsOn && voiceOn) next = currentMode === 'idle' ? 'signs' : currentMode; // mantém o que já estava ativo
+    else next = 'idle';
+
+    if(next !== currentMode){
+      currentMode = next;
+      updateModeBadge(currentMode);
+      setStatus(currentMode === 'voice' ? 'voice' : currentMode === 'signs' ? 'signs' : 'idle');
+      if(currentMode !== 'voice'){ sampleBuffer = []; }
+      if(currentMode === 'signs'){
+        renderCaption('(a ver sinais — reconhecimento chega no Passo 5/6)');
+      } else if(currentMode === 'idle'){
+        renderCaption('');
+      }
+    }
+  }
+
+  async function startAll(){
+    await Promise.all([startAudio(), startCamera()]);
+    currentMode = 'idle';
+    updateModeBadge('idle');
+    setStatus('idle');
+    renderCaption('');
+    arbiterTimer = setInterval(arbiterTick, 300);
+  }
+
+  function stopAll(){
+    if(arbiterTimer){ clearInterval(arbiterTimer); arbiterTimer = null; }
+    stopAudio();
+    stopCamera();
+    currentMode = 'idle';
+    updateModeBadge('idle');
+    setStatus('idle');
+  }
+
+  startToggle.addEventListener('click', async function(){
+    running = !running;
+    if(running){
+      startToggle.textContent = 'Parar conversa';
+      startToggle.classList.add('on');
+      try{
+        await startAll();
+      } catch(err){
+        console.error(err);
+        alert('Não foi possível aceder ao microfone e/ou à câmara. Verifique as permissões do navegador.');
+        running = false;
+        startToggle.textContent = 'Iniciar conversa';
+        startToggle.classList.remove('on');
+        stopAll();
+      }
+    } else {
+      startToggle.textContent = 'Iniciar conversa';
+      startToggle.classList.remove('on');
+      stopAll();
+    }
+  });
+
+  clearBtn.addEventListener('click', function(){
+    finalTranscript = '';
+    renderCaption('');
+  });
+
+  function speakReply(){
+    const text = replyInput.value.trim();
+    if(!text) return;
+    if(!('speechSynthesis' in window)){
+      alert('Este navegador não suporta saída de voz.');
+      return;
+    }
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'pt-PT';
+    utter.onstart = function(){ setStatus('speaking'); speakBtn.disabled = true; };
+    utter.onend = function(){
+      speakBtn.disabled = false;
+      setStatus(currentMode === 'voice' ? 'voice' : currentMode === 'signs' ? 'signs' : 'idle');
+    };
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+  }
+
+  speakBtn.addEventListener('click', speakReply);
+  replyInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') speakReply(); });
+
+  loadModel();
+</script>
+
+</body>
+</html>
